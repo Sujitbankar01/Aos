@@ -126,3 +126,59 @@ Output :
 Total user time spent by children: 0.000002 seconds
 
 Total kernel time spent by children: 0.000000 seconds
+Q.1) Write a C Program that demonstrates redirection of standard output to a file.
+#include <stdio.h>
+int main() {
+ // File pointer to store the redirected output
+ FILE *file_ptr;
+ // Open the file in write mode to redirect output
+ file_ptr = freopen("output.txt", "w", stdout);
+ if (file_ptr == NULL) {
+ perror("Error opening file");
+ return 1;
+ }
+ // Printing to stdout (redirected to file)
+ printf("This output is redirected to a file.\n");
+ // Closing the file pointer
+ fclose(file_ptr);
+ return 0;
+Downloaded by Aritc369 (artic1899@gmail.com) }
+Output : 
+This output is redirected to a file.
+Q.2) Implement the following unix/linux command (use fork, pipe and exec system call) 
+ls –l | wc –l
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+int main() {
+ int pipe_fd[2];
+ if (pipe(pipe_fd) == -1) {
+ perror("Pipe creation failed");
+ exit(EXIT_FAILURE);
+ }
+ pid_t pid = fork();
+ if (pid < 0) {
+ perror("Fork failed");
+ exit(EXIT_FAILURE);
+ } else if (pid == 0) { // Child process
+ close(pipe_fd[0]); // Close reading end of pipe in child
+ dup2(pipe_fd[1], STDOUT_FILENO); // Redirect stdout to pipe write end// Execute ls -l command
+ execlp("ls", "ls", "-l", NULL);
+ // execlp will not return unless there's an error
+ perror("exec ls -l failed");
+ exit(EXIT_FAILURE);
+ } else { // Parent process
+ close(pipe_fd[1]); // Close writing end of pipe in parent
+ dup2(pipe_fd[0], STDIN_FILENO); // Redirect stdin to pipe read end
+ // Execute wc -l command
+ execlp("wc", "wc", "-l", NULL);
+ // execlp will not return unless there's an error
+ perror("exec wc -l failed");
+ exit(EXIT_FAILURE);
+ }
+ return 0;
+}
+Output :
+7
